@@ -17,6 +17,8 @@ type Model struct {
 	catFact  string
 	err      ErrorMsg
 	fetching bool
+	width    int
+	height   int
 }
 
 func main() {
@@ -24,7 +26,7 @@ func main() {
 	s.Spinner = spinner.Dot
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
-	p := tea.NewProgram(&Model{spinner: s, catFact: "Press `Enter`"})
+	p := tea.NewProgram(&Model{spinner: s, catFact: "Press `Enter`"}, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
@@ -37,6 +39,10 @@ func (m *Model) Init() tea.Cmd { return m.spinner.Tick }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c", "esc":
@@ -71,11 +77,17 @@ func (m *Model) View() string {
 		Height(10).
 		Align(lipgloss.Center, lipgloss.Center)
 
+	var content string
 	if m.fetching {
-		return style.Render(m.spinner.View())
+		content = m.spinner.View()
+	} else {
+		content = m.catFact
 	}
 
-	return style.Render(m.catFact)
+	renderedContent := style.Render(content)
+
+	// Center the entire content within the terminal
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, renderedContent)
 }
 
 func (m *Model) GetCatFact() tea.Cmd {

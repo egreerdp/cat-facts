@@ -23,7 +23,7 @@ type Model struct {
 
 func main() {
 	s := spinner.New()
-	s.Spinner = spinner.Globe
+	s.Spinner = spinner.Monkey
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	p := tea.NewProgram(&Model{spinner: s, message: "Press `Enter`"}, tea.WithAltScreen())
@@ -95,13 +95,15 @@ func (m *Model) GetCatFact() tea.Cmd {
 		resp, err := http.Get("https://meowfacts.herokuapp.com/")
 		if err != nil {
 			m.err = ErrorMsg(err.Error())
+			m.fetching = false
 			return nil
 		}
 
 		var catData map[string]any
 		err = json.NewDecoder(resp.Body).Decode(&catData)
-		if err == nil {
-			m.err = ErrorMsg("test error")
+		if err != nil {
+			m.err = ErrorMsg(err.Error())
+			m.fetching = false
 			return nil
 		}
 

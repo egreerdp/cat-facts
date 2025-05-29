@@ -23,7 +23,7 @@ type Model struct {
 
 func main() {
 	s := spinner.New()
-	s.Spinner = spinner.Monkey
+	s.Spinner = spinner.Globe
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	p := tea.NewProgram(&Model{spinner: s, message: "Press `Enter`"}, tea.WithAltScreen())

@@ -14,7 +14,7 @@ import (
 
 type Model struct {
 	spinner  spinner.Model
-	catFact  string
+	message  string
 	err      ErrorMsg
 	fetching bool
 	width    int
@@ -23,12 +23,12 @@ type Model struct {
 
 func main() {
 	s := spinner.New()
-	s.Spinner = spinner.Dot
+	s.Spinner = spinner.Monkey
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
-	p := tea.NewProgram(&Model{spinner: s, catFact: "Press `Enter`"}, tea.WithAltScreen())
+	p := tea.NewProgram(&Model{spinner: s, message: "Press `Enter`"}, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Alas, there's been an error: %v", err)
+		fmt.Printf("Error running program: %s", err.Error())
 		os.Exit(1)
 	}
 }
@@ -67,26 +67,25 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) View() string {
-	if m.err != "" {
-		return string(m.err)
-	}
-
 	style := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).
 		Width(50).
 		Height(10).
 		Align(lipgloss.Center, lipgloss.Center)
 
+	if m.err != "" {
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, style.Render(string(m.err)))
+	}
+
 	var content string
 	if m.fetching {
 		content = m.spinner.View()
 	} else {
-		content = m.catFact
+		content = m.message
 	}
 
 	renderedContent := style.Render(content)
 
-	// Center the entire content within the terminal
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, renderedContent)
 }
 
@@ -99,13 +98,10 @@ func (m *Model) GetCatFact() tea.Cmd {
 			return nil
 		}
 
-		var catData struct {
-			Data []string `json:"data"`
-		}
-
+		var catData map[string]any
 		err = json.NewDecoder(resp.Body).Decode(&catData)
-		if err != nil {
-			m.err = ErrorMsg(err.Error())
+		if err == nil {
+			m.err = ErrorMsg("test error")
 			return nil
 		}
 
@@ -113,9 +109,9 @@ func (m *Model) GetCatFact() tea.Cmd {
 			time.Sleep(time.Second * 1)
 		}
 
-		m.catFact = catData.Data[0]
+		m.message = catData["data"].([]any)[0].(string)
 		m.fetching = false
 
-		return m.catFact
+		return m.message
 	}
 }

@@ -1,3 +1,9 @@
+## 0.3.0 (2025-05-29)
+
+### Feat
+
+- set fetching to false when error
+
 ## 0.2.0 (2025-05-29)
 
 ### Feat
